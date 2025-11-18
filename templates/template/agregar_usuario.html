@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>registrar alumno/estudiante  (no terminado)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">registro</h1>
+        </div>
+
+        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.as_p }}
+                    </div>
+                    <div class="text-center">
+                        <input type="submit" value="{% if editar %}Guardar cambios{% else %}Registrar docente{% endif %}" class="btn btn-success btn-lg w-100">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+            {% if form.email.errors %}
+                    <div class="text-danger">
+                        {{ form.correo.errors }}
+                    </div>
+            {% endif %}
+        <div class="text-center mt-4">
+            <a href="{% url 'home' %}" class="btn btn-outline-primary m-2">Volver al inicio</a>
+        </div>
+    </div>
+</body>
+</html>

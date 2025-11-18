@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<h1>{{ apunte.titulo }}</h1>
+<p>Subido por: {{ apunte.usuario.user.username }}</p>
+<p>{{ apunte.descripcion }}</p>
+
+{% if apunte.archivo %}
+    <iframe src="{{ apunte.archivo.url }}" width="100%" height="600px"></iframe>
+{% else %}
+    <p>No hay archivo disponible</p>
+{% endif %}
+
+<hr>
+
+<p>Calificación promedio: {{ promedio|floatformat:1 }} / 5</p>
+
+<form method="POST">
+    {% csrf_token %}
+    <label for="calificacion">Tu calificación:</label>
+    <select name="calificacion" id="calificacion">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select>
+    <button type="submit">Subir</button>
+</form>
+
+    <a href="{% url 'home' %}" class="btn btn-outline-primary m-2">salir</a>
+    <a href="{% url 'login' %}" class="btn btn-outline-primary m-2">solo pueden descargar archivo los q estan registrados</a>
+
+</body>
+</html>
