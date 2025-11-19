@@ -1,32 +1,71 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <title>Subir Apunte</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6f9;
+        }
+        .card {
+            border-radius: 15px;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="text-center mb-4">
-            <h1 class="display-5 fw-bold text-primary">subir apunte</h1>
-        </div>
 
-        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
-            <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        {{ form.as_p }}
-                    </div>
-                        <button type="submit" class="btn btn-primary">Subir</button>
-                </form>
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <a href="{% url 'home' %}" class="btn btn-outline-primary m-2">Volver al inicio</a>
-        </div>
+<body>
 
+<div class="container py-5">
+
+    <!-- TÍTULO -->
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-primary">📄 Subir nuevo apunte</h1>
+        <p class="text-muted">Rellena los campos y comparte tu apunte con la comunidad.</p>
     </div>
+
+    <!-- FORMULARIO -->
+    <div class="card shadow mx-auto p-4" style="max-width: 650px;">
+
+        <h4 class="mb-4 text-secondary text-center">Información del apunte</h4>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Renderizado bonito de campos -->
+            {% for field in form %}
+                <div class="mb-4">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Subir apunte
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- BOTÓN VOLVER -->
+    <div class="text-center mt-4">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            ← Volver al inicio
+        </a>
+    </div>
+
+</div>
+
 </body>
 </html>

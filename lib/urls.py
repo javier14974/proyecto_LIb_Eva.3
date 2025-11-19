@@ -27,8 +27,10 @@ urlpatterns = [
     path('subir_apunte/', subir_apunte, name="subir_apunte"),
     path('login/', login_vista, name="login"),
     path('logout/', logout_vista, name='logout'),
-    path('apunte/<int:apunte_id>/', detalle_apunte, name='detalle_apunte')
-  
+    path('apunte/<int:apunte_id>/', detalle_apunte, name='detalle_apunte'),
+    path('perfil/<int:usuario_id>/', perfil_vista, name='perfil_vista'),
+    path('eliminar_apunte/<int:apunte_id>',eliminar_apunte, name='eliminar_apunte'),
+    path('editar_apunte/<int:apunte_id>',editar_apunte, name='editar_apunte'),
 ]
 
 

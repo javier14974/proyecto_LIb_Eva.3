@@ -6,6 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.db.models import Avg
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -56,6 +58,7 @@ def subir_apunte(request):
 
     return render(request, 'template/subir_apunte.html', {'form': form})
 
+
 def login_vista(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -82,27 +85,89 @@ def logout_vista(request):
 
 def detalle_apunte(request, apunte_id):
     apunte = get_object_or_404(Apunte, id=apunte_id)
-    usuario_actual = request.user.usuario  # tu usuario logueado
 
-    if request.method == "POST":
-        calificacion = int(request.POST.get("calificacion", 0))
-        if 1 <= calificacion <= 5:
-            # Crear o actualizar calificación
-            obj, created = ApunteCalificacion.objects.update_or_create(
-                apunte=apunte,
-                usuario=usuario_actual,
-                defaults={"calificacion": calificacion}
-            )
-        return redirect('detalle_apunte', apunte_id=apunte.id)
+    # Si hay calificación
+    promedio = ApunteCalificacion.objects.filter(apunte=apunte).aggregate(Avg("calificacion"))["calificacion__avg"] or 0
 
-    # Promedio de calificaciones
-    promedio = ApunteCalificacion.objects.filter(apunte=apunte).aggregate(models.Avg('calificacion'))['calificacion__avg']
+    usuario = None
+    if request.user.is_authenticated:
+        usuario = request.user.usuario
 
-    return render(request, 'template/detalle_apunte.html', {
-        'apunte': apunte,
-        'promedio': promedio or 0
+    # Guardar calificación
+    if request.method == "POST" and request.user.is_authenticated:
+        calificacion = request.POST.get("calificacion")
+        ApunteCalificacion.objects.update_or_create(
+            apunte=apunte,
+            usuario=request.user.usuario,
+            defaults={"calificacion": calificacion},
+        )
+        return redirect("detalle_apunte", apunte_id=apunte.id)
+
+    return render(request, "template/detalle_apunte.html", {
+        "apunte": apunte,
+        "promedio": promedio,
+        "usuario": usuario,
+    })
+
+
+
+def home(request): #filtro
+    apuntes = Apunte.objects.all()
+
+    # filtros
+    nombre = request.GET.get("nombre", "")
+    asignatura = request.GET.get("asignatura", "")
+    carrera = request.GET.get("carrera", "")
+
+    if nombre:
+        apuntes = apuntes.filter(titulo__icontains=nombre)
+
+    if asignatura:
+        apuntes = apuntes.filter(asignatura__icontains=asignatura)
+
+    if carrera:
+        apuntes = apuntes.filter(carrera__icontains=carrera)
+
+    return render(request, "template/home.html", {
+        "apuntes": apuntes,
+        "nombre": nombre,
+        "asignatura": asignatura,
+        "carrera": carrera,
+    })
+
+
+
+def perfil_vista(request, usuario_id):
+    # Obtener el usuario
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    
+    # Traer solo sus apuntes
+    apuntes = Apunte.objects.filter(usuario=usuario)
+
+    return render(request, "template/perfil.html", {
+        "apuntes": apuntes,
+        "usuario": usuario,
     })
 
 
 
 
+
+def eliminar_apunte(request, apunte_id):
+    apunte = get_object_or_404(Apunte, id=apunte_id)
+    apunte.delete()
+    return redirect('home')
+
+
+def editar_apunte(request, apunte_id):
+    # Obtener el docente a editar
+    apunte = get_object_or_404(Apunte, id=apunte_id)
+
+    # Crear el formulario pasando la instancia existente
+    form = subir_apuntes_forms(request.POST or None, instance=apunte)
+
+    if form.is_valid():
+        form.save()  # Sobrescribe los datos existentes
+        return redirect('home')  
+
+    return render(request, 'template/subir_apunte.html', {'form': form, 'editar': True})
