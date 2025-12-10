@@ -7,10 +7,13 @@ from .validation import validar_solo_letras_y_num
 from .validation import validar_solo_letras
 
 
-
-
+# ============================================================
+#   FORMULARIO: Registrar Usuario
+#   Maneja el registro de un nuevo usuario y su validación.
+# ============================================================
 class registrarUsuario(forms.ModelForm):
 
+    # Nombre de usuario (no confundir con el modelo Usuario personalizado)
     username = forms.CharField(
         label='Nombre',
         min_length=3,
@@ -23,6 +26,7 @@ class registrarUsuario(forms.ModelForm):
         }
     )
 
+    # Contraseña del usuario
     password = forms.CharField(
         widget=forms.PasswordInput,
         label='contraseña',
@@ -36,6 +40,7 @@ class registrarUsuario(forms.ModelForm):
         }
     )
 
+    # Correo electrónico
     email = forms.EmailField(
         label='correo',
         required=True,
@@ -45,6 +50,7 @@ class registrarUsuario(forms.ModelForm):
         }
     )
 
+    # Datos personales del usuario
     carrera = forms.CharField(
         required=True,
         min_length=3,
@@ -81,10 +87,11 @@ class registrarUsuario(forms.ModelForm):
         }
     )
 
+    # Edad del usuario
     edad = forms.IntegerField(
         required=True,
-        min_value=1,     
-        max_value=100,   
+        min_value=1,
+        max_value=100,
         error_messages={
             "required": "La edad es obligatoria.",
             "invalid": "Debes ingresar un número válido.",
@@ -94,16 +101,18 @@ class registrarUsuario(forms.ModelForm):
     )
 
     class Meta:
+        # Se vincula al modelo Usuario (modelo propio, no el de Django)
         model = Usuario
         fields = ['carrera', 'ciudad', 'universidad', 'edad', 'rol']
 
+    # Orden específico en el formulario
     field_order = [
         'username', 'password', 'email',
         'carrera', 'ciudad', 'universidad', 'edad', 'rol'
     ]
 
 
-    
+    # Validar que el username no exista
     def clean_username(self):
         username = self.cleaned_data.get('username')
 
@@ -112,6 +121,7 @@ class registrarUsuario(forms.ModelForm):
 
         return username
 
+    # Validar que el email no esté repetido
     def clean_email(self):
         email = self.cleaned_data.get('email')
 
@@ -123,9 +133,11 @@ class registrarUsuario(forms.ModelForm):
 
         return email
 
+    # Validaciones generales del formulario
     def clean(self):
         cleaned_data = super().clean()
 
+        # Validar campos de texto
         for campo in ['carrera', 'ciudad', 'universidad', 'rol']:
             valor = cleaned_data.get(campo)
 
@@ -134,12 +146,10 @@ class registrarUsuario(forms.ModelForm):
 
             if isinstance(valor, str):
                 valor = valor.strip()
-                
-
-                validar_solo_letras(valor)
-
+                validar_solo_letras(valor)   # Valida que sean solo letras
                 cleaned_data[campo] = valor
 
+        # Validar edad
         edad = cleaned_data.get("edad")
         if edad is None:
             raise forms.ValidationError("La edad es obligatoria.")
@@ -149,8 +159,10 @@ class registrarUsuario(forms.ModelForm):
         return cleaned_data
 
 
+    # Guardado personalizado
     def save(self, commit=True):
-        if not self.instance.pk:  # Solo si se está creando
+        # Si es un usuario nuevo, crear también el User de Django
+        if not self.instance.pk:
             user = User.objects.create_user(
                 username=self.cleaned_data['username'],
                 password=self.cleaned_data['password'],
@@ -158,6 +170,7 @@ class registrarUsuario(forms.ModelForm):
             )
             self.instance.user = user
         else:
+            # Actualizar email si ya existe
             self.instance.user.email = self.cleaned_data.get('email', self.instance.user.email)
             self.instance.user.save()
 
@@ -166,7 +179,10 @@ class registrarUsuario(forms.ModelForm):
 
 
 
-
+# ============================================================
+#   FORMULARIO: Subir Apuntes
+#   Valida texto y archivos PDF/Word antes de guardar.
+# ============================================================
 class subir_apuntes_forms(forms.ModelForm):
 
     titulo = forms.CharField(
@@ -225,7 +241,7 @@ class subir_apuntes_forms(forms.ModelForm):
         fields = ['titulo', 'descripcion', 'archivo', 'asignatura', 'carrera']
 
 
-
+    # Validación general del formulario
     def clean(self):
         cleaned_data = super().clean()
 
@@ -235,31 +251,34 @@ class subir_apuntes_forms(forms.ModelForm):
             if not valor:
                 raise forms.ValidationError(f"El campo '{campo}' es obligatorio.")
 
-            # Limpia espacios y caracteres peligrosos
+            # Limpieza básica
             valor = valor.strip()
-            valor = re.sub(r'[<>"]', '', valor)
+            valor = re.sub(r'[<>"]', '', valor)  # Elimina caracteres peligrosos
 
             cleaned_data[campo] = valor
 
         return cleaned_data
 
 
-
+    # Validación de archivo subido
     def clean_archivo(self):
         archivo = self.cleaned_data.get('archivo', False)
 
         if not archivo:
             return archivo
 
-        max_size = 200 * 1024 * 1024  # 200 MB
+        # Tamaño máximo permitido
+        max_size = 200 * 1024 * 1024
         if archivo.size > max_size:
             raise forms.ValidationError("El archivo no puede superar los 200 MB.")
 
+        # Extensiones permitidas
         ext = os.path.splitext(archivo.name)[1].lower()
         valid_extensions = ['.pdf', '.doc', '.docx']
         if ext not in valid_extensions:
             raise forms.ValidationError("Solo se permiten archivos PDF o Word (.doc, .docx).")
 
+        # Verifica MIME para evitar archivos falsos
         mime = magic.from_buffer(archivo.read(2048), mime=True)
         archivo.seek(0)
 
@@ -269,6 +288,7 @@ class subir_apuntes_forms(forms.ModelForm):
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ]
 
+        # Validar DOCX (que sea un ZIP válido con estructura)
         if ext == '.docx':
             if mime not in valid_mime and not mime.startswith('application/zip'):
                 raise forms.ValidationError("El archivo DOCX no tiene un formato válido.")
@@ -287,9 +307,15 @@ class subir_apuntes_forms(forms.ModelForm):
         return archivo
 
 
+
+
+# ============================================================
+#   FORMULARIO PARA LOGIN DE ADMIN PERSONALIZADO
+# ============================================================
 class formulario_admin(forms.Form):
     username = forms.CharField(error_messages={"required": "El nombre es obligatorio."})
     password = forms.CharField(widget=forms.PasswordInput, error_messages={"required": "La contraseña es obligatoria."})
+
 
 
 
